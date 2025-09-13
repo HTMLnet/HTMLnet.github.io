@@ -16,8 +16,6 @@
 <option value="flash">Flash</option>
 <option value="slidein">Slide In</option>
 <option value="scalein">Scale In</option>
-<option value="shakein">Shake In</option>
-<option value="rotatein">Rotate In</option>
 </select>
 <label>Fade Out:</label>
 <select id="fadeOut">
@@ -28,9 +26,10 @@
 <option value="scaleout">Scale Out</option>
 <option value="flashout">Flash Out</option>
 <option value="glitchout">Glitch Out</option>
-<option value="shakeout">Shake Out</option>
-<option value="rotateout">Rotate Out</option>
 </select>
+<br>
+<label>FPS:</label>
+<input type="number" id="fps" value="20">
 <br>
 <label>Delay before Out:</label>
 <input type="number" id="delayValue" value="2">
@@ -40,45 +39,33 @@
 </select>
 <br>
 <button onclick="runAnim()">Generate</button>
-<a id="download" href="#">Download GIF</a>
 
 <script>
 let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input")
 
-function render(text,scale=1,x=10,alpha=1,rotate=0,shake=0){
+function render(text,scale=1,x=10,alpha=1){
  ctx.globalAlpha=1
  ctx.fillStyle="white";ctx.fillRect(0,0,canvas.width,canvas.height)
- ctx.save()
  ctx.globalAlpha=alpha
- ctx.translate(canvas.width/2,canvas.height/2)
- ctx.rotate(rotate*Math.PI/180)
- ctx.translate(-canvas.width/2,-canvas.height/2)
- let shakeX=Math.random()*shake-shake/2
- let shakeY=Math.random()*shake-shake/2
  ctx.fillStyle="black";ctx.font=`${16*scale}px monospace`
- ctx.fillText(text, x+shakeX, 100+shakeY)
- ctx.restore()
+ ctx.fillText(text, x, 100)
  ctx.globalAlpha=1
 }
 
 function buildFrames(mode,text){
  let frames=[]
- if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i),1,10,1,0,0])}
- if(mode=="wave"){for(let i=0;i<text.length*2;i++){frames.push([text.map((c,idx)=>idx==i%text.length?c.toUpperCase():c).join(""),1,10,1,0,0])}}
- if(mode=="glitch"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.1?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1,0,0])}frames.push([text.join(""),1,10,1,0,0])}
- if(mode=="flash"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",1,10,1,0,0])}}
- if(mode=="slidein"){for(let x=600;x>10;x-=20)frames.push([text.join(""),1,x,1,0,0])}
- if(mode=="scalein"){for(let s=0.1;s<=1;s+=0.1)frames.push([text.join(""),s,10,1,0,0])}
- if(mode=="shakein"){for(let i=0;i<15;i++)frames.push([text.join(""),1,10,1,0,5])}
- if(mode=="rotatein"){for(let r=45;r>=0;r-=5)frames.push([text.join(""),1,10,1,r,0])}
- if(mode=="reverse"){let rev=[...text].reverse();for(let i=1;i<=rev.length;i++)frames.push([rev.slice(0,i).join(""),1,10,1,0,0])}
- if(mode=="fadeout"){for(let a=1;a>=0;a-=0.05)frames.push([text.join(""),1,10,a,0,0])}
- if(mode=="slideout"){for(let x=10;x<600;x+=20)frames.push([text.join(""),1,x,1,0,0])}
- if(mode=="scaleout"){for(let s=1;s>=0.1;s-=0.1)frames.push([text.join(""),s,10,1,0,0])}
- if(mode=="flashout"){for(let i=0;i<20;i++)frames.push([i%2==0?text.join(""):"",1,10,1,0,0])}
- if(mode=="glitchout"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1,0,0])}frames.push(["",1,10,1,0,0])}
- if(mode=="shakeout"){for(let i=0;i<15;i++)frames.push([text.join(""),1,10,1,0,5])}
- if(mode=="rotateout"){for(let r=0;r<=45;r+=5)frames.push([text.join(""),1,10,1,r,0])}
+ if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i),1,10,1])}
+ if(mode=="wave"){for(let i=0;i<text.length*2;i++){frames.push([text.map((c,idx)=>idx==i%text.length?c.toUpperCase():c).join(""),1,10,1])}}
+ if(mode=="glitch"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.1?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1])}frames.push([text.join(""),1,10,1])}
+ if(mode=="flash"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",1,10,1])}}
+ if(mode=="slidein"){for(let x=600;x>10;x-=20)frames.push([text.join(""),1,x,1])}
+ if(mode=="scalein"){for(let s=0.1;s<=1;s+=0.1)frames.push([text.join(""),s,10,1])}
+ if(mode=="reverse"){let rev=[...text].reverse();for(let i=1;i<=rev.length;i++)frames.push([rev.slice(0,i).join(""),1,10,1])}
+ if(mode=="fadeout"){for(let a=1;a>=0;a-=0.05)frames.push([text.join(""),1,10,a])}
+ if(mode=="slideout"){for(let x=10;x<600;x+=20)frames.push([text.join(""),1,x,1])}
+ if(mode=="scaleout"){for(let s=1;s>=0.1;s-=0.1)frames.push([text.join(""),s,10,1])}
+ if(mode=="flashout"){for(let i=0;i<20;i++)frames.push([i%2==0?text.join(""):"",1,10,1])}
+ if(mode=="glitchout"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1])}frames.push(["",1,10,1])}
  return frames
 }
 
@@ -86,30 +73,34 @@ function runAnim(){
  let text=input.value.split("")
  let fadeIn=document.getElementById("fadeIn").value
  let fadeOut=document.getElementById("fadeOut").value
+ let fps=parseInt(document.getElementById("fps").value)
  let delayValue=parseInt(document.getElementById("delayValue").value)
  let delayUnit=document.getElementById("delayUnit").value
- let fps=20
  let delayFrames=(delayUnit=="s"?delayValue*fps:Math.floor(delayValue/(1000/fps)))
 
  let frames=[]
  frames=frames.concat(buildFrames(fadeIn,text))
- for(let d=0;d<delayFrames;d++)frames.push([text.join(""),1,10,1,0,0])
+ for(let d=0;d<delayFrames;d++)frames.push([text.join(""),1,10,1])
  if(fadeOut!="none")frames=frames.concat(buildFrames(fadeOut,text))
 
  let capturer=new CCapture({format:'gif',framerate:fps})
  let i=0
  function draw(){
   if(i<frames.length){
-   let f=frames[i];render(f[0],f[1],f[2],f[3],f[4],f[5])
+   let f=frames[i];render(f[0],f[1],f[2],f[3])
    capturer.capture(canvas)
    i++;setTimeout(draw,1000/fps)
   }else{
    capturer.stop()
    capturer.save(blob=>{
-    let url=URL.createObjectURL(blob)
-    let d=document.getElementById("download")
-    d.href=url
-    d.download="ascii_intro.gif"
+     let url=URL.createObjectURL(blob)
+     let a=document.createElement('a')
+     a.href=url
+     a.download="ascii_intro.gif"
+     document.body.appendChild(a)
+     a.click()
+     document.body.removeChild(a)
+     URL.revokeObjectURL(url)
    })
   }
  }
