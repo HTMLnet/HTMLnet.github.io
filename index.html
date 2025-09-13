@@ -1,309 +1,120 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>HTML6 — Expanded Concepts</title>
+<title>ASCII Intro GIF Maker</title>
+<script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
 </head>
 <body>
-  <h1>HTML6 Concepts (90+ Features)</h1>
-  <p>No CSS, only HTML and JavaScript.</p>
+<textarea id="input" rows="6" cols="50" placeholder="Put ASCII or text intro here"></textarea>
+<canvas id="canvas" width="600" height="200"></canvas>
+<br>
+<label>Fade In:</label>
+<select id="fadeIn">
+<option value="typewriter">Typewriter</option>
+<option value="wave">Wave</option>
+<option value="glitch">Glitch</option>
+<option value="flash">Flash</option>
+<option value="slidein">Slide In</option>
+<option value="scalein">Scale In</option>
+<option value="shakein">Shake In</option>
+<option value="rotatein">Rotate In</option>
+</select>
+<label>Fade Out:</label>
+<select id="fadeOut">
+<option value="none">None</option>
+<option value="reverse">Reverse</option>
+<option value="fadeout">Fade Out</option>
+<option value="slideout">Slide Out</option>
+<option value="scaleout">Scale Out</option>
+<option value="flashout">Flash Out</option>
+<option value="glitchout">Glitch Out</option>
+<option value="shakeout">Shake Out</option>
+<option value="rotateout">Rotate Out</option>
+</select>
+<br>
+<label>Delay before Out:</label>
+<input type="number" id="delayValue" value="2">
+<select id="delayUnit">
+<option value="s">Seconds</option>
+<option value="ms">Milliseconds</option>
+</select>
+<br>
+<button onclick="runAnim()">Generate</button>
+<a id="download" href="#">Download GIF</a>
 
-  <div>
-    <label for="search">Search features:</label>
-    <input id="search" type="search" placeholder="type keyword...">
-    <button id="clearSearch" type="button">Clear</button>
-    <button id="random" type="button">Pick random feature</button>
-    <button id="copyAll" type="button">Copy visible features</button>
-    <button id="download" type="button">Download visible features</button>
-  </div>
+<script>
+let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input")
 
-  <div>
-    <label for="conceptFilter">Filter by concept:</label>
-    <select id="conceptFilter">
-      <option value="all">All concepts</option>
-    </select>
-    <button id="toggleAll" type="button">Collapse all</button>
-  </div>
+function render(text,scale=1,x=10,alpha=1,rotate=0,shake=0){
+ ctx.globalAlpha=1
+ ctx.fillStyle="white";ctx.fillRect(0,0,canvas.width,canvas.height)
+ ctx.save()
+ ctx.globalAlpha=alpha
+ ctx.translate(canvas.width/2,canvas.height/2)
+ ctx.rotate(rotate*Math.PI/180)
+ ctx.translate(-canvas.width/2,-canvas.height/2)
+ let shakeX=Math.random()*shake-shake/2
+ let shakeY=Math.random()*shake-shake/2
+ ctx.fillStyle="black";ctx.font=`${16*scale}px monospace`
+ ctx.fillText(text, x+shakeX, 100+shakeY)
+ ctx.restore()
+ ctx.globalAlpha=1
+}
 
-  <hr>
+function buildFrames(mode,text){
+ let frames=[]
+ if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i),1,10,1,0,0])}
+ if(mode=="wave"){for(let i=0;i<text.length*2;i++){frames.push([text.map((c,idx)=>idx==i%text.length?c.toUpperCase():c).join(""),1,10,1,0,0])}}
+ if(mode=="glitch"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.1?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1,0,0])}frames.push([text.join(""),1,10,1,0,0])}
+ if(mode=="flash"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",1,10,1,0,0])}}
+ if(mode=="slidein"){for(let x=600;x>10;x-=20)frames.push([text.join(""),1,x,1,0,0])}
+ if(mode=="scalein"){for(let s=0.1;s<=1;s+=0.1)frames.push([text.join(""),s,10,1,0,0])}
+ if(mode=="shakein"){for(let i=0;i<15;i++)frames.push([text.join(""),1,10,1,0,5])}
+ if(mode=="rotatein"){for(let r=45;r>=0;r-=5)frames.push([text.join(""),1,10,1,r,0])}
+ if(mode=="reverse"){let rev=[...text].reverse();for(let i=1;i<=rev.length;i++)frames.push([rev.slice(0,i).join(""),1,10,1,0,0])}
+ if(mode=="fadeout"){for(let a=1;a>=0;a-=0.05)frames.push([text.join(""),1,10,a,0,0])}
+ if(mode=="slideout"){for(let x=10;x<600;x+=20)frames.push([text.join(""),1,x,1,0,0])}
+ if(mode=="scaleout"){for(let s=1;s>=0.1;s-=0.1)frames.push([text.join(""),s,10,1,0,0])}
+ if(mode=="flashout"){for(let i=0;i<20;i++)frames.push([i%2==0?text.join(""):"",1,10,1,0,0])}
+ if(mode=="glitchout"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1,0,0])}frames.push(["",1,10,1,0,0])}
+ if(mode=="shakeout"){for(let i=0;i<15;i++)frames.push([text.join(""),1,10,1,0,5])}
+ if(mode=="rotateout"){for(let r=0;r<=45;r+=5)frames.push([text.join(""),1,10,1,r,0])}
+ return frames
+}
 
-  <main id="conceptsContainer"></main>
+function runAnim(){
+ let text=input.value.split("")
+ let fadeIn=document.getElementById("fadeIn").value
+ let fadeOut=document.getElementById("fadeOut").value
+ let delayValue=parseInt(document.getElementById("delayValue").value)
+ let delayUnit=document.getElementById("delayUnit").value
+ let fps=20
+ let delayFrames=(delayUnit=="s"?delayValue*fps:Math.floor(delayValue/(1000/fps)))
 
-  <template id="featureTemplate">
-    <details class="feature">
-      <summary></summary>
-      <p class="desc"></p>
-      <p><button type="button" class="copyBtn">Copy feature</button></p>
-    </details>
-  </template>
+ let frames=[]
+ frames=frames.concat(buildFrames(fadeIn,text))
+ for(let d=0;d<delayFrames;d++)frames.push([text.join(""),1,10,1,0,0])
+ if(fadeOut!="none")frames=frames.concat(buildFrames(fadeOut,text))
 
-  <script>
-    (function(){
-      var concepts = [
-        {
-          id: "semantics",
-          title: "Concept 1 — Semantic Richness",
-          features: [
-            {title:"1.1 Contextual Elements", desc:"Elements that declare semantic context with machine-readable intents."},
-            {title:"1.2 Typed Sections", desc:"Section elements that carry a strict data type enabling native processing."},
-            {title:"1.3 Enhanced Landmark Roles", desc:"Built-in ARIA-equivalent attributes reducing external ARIA markers."},
-            {title:"1.4 Declarative Data Contracts", desc:"Attributes that define expected JSON schema for contained data."},
-            {title:"1.5 Intent Attributes", desc:"A standardized 'intent' attribute to signal purpose."},
-            {title:"1.6 Relationship Attributes", desc:"Attributes to declare relations between elements."},
-            {title:"1.7 Native Microformat Support", desc:"Standardized microformats built into tags."},
-            {title:"1.8 Section Versioning", desc:"Elements can carry version metadata for changes."},
-            {title:"1.9 Queryable Semantics", desc:"Elements expose metadata for querying."},
-            {title:"1.10 Declarative Ontologies", desc:"Tags can reference ontologies directly for richer semantics."},
-            {title:"1.11 Document Purpose Declaration", desc:"A <purpose> element to specify full-document intent."},
-            {title:"1.12 Native Entity Tags", desc:"Entities like person, org, location as first-class tags."},
-            {title:"1.13 Semantic Math Blocks", desc:"Elements for structured math beyond <math>."},
-            {title:"1.14 Proof-of-Origin Metadata", desc:"Semantic tags embed cryptographic source proofs."},
-            {title:"1.15 Concept Maps", desc:"Built-in diagramming for semantic concept relations."}
-          ]
-        },
-        {
-          id: "media_graphics",
-          title: "Concept 2 — Media & Graphics",
-          features: [
-            {title:"2.1 Native Vector Canvas", desc:"A <vector> element for scalable vector scenes."},
-            {title:"2.2 Timed Media Tracks", desc:"Media with timed metadata tracks."},
-            {title:"2.3 Adaptive Source Selection", desc:"Automatic source switching by context."},
-            {title:"2.4 Procedural Images", desc:"An <img> attribute for procedural generation."},
-            {title:"2.5 Native Compositing Modes", desc:"Declarative blending attributes."},
-            {title:"2.6 Native WebGL-lite", desc:"Simplified declarative shader element."},
-            {title:"2.7 Media Privacy Controls", desc:"Attributes to disable tracking in media."},
-            {title:"2.8 Responsive Art Direction", desc:"Art direction attributes by viewport."},
-            {title:"2.9 Live Media Filters", desc:"Built-in attributes for visual/audio filters."},
-            {title:"2.10 Interactive Timeline Tags", desc:"Declarative timelines inside <video>."},
-            {title:"2.11 Generative Audio Element", desc:"A <sound> tag for generative audio patterns."},
-            {title:"2.12 Spatial Media Attributes", desc:"3D positional metadata in media."},
-            {title:"2.13 Synchronized Media Groups", desc:"Link media players declaratively."},
-            {title:"2.14 Native Media Transitions", desc:"Smooth transitions between media states."},
-            {title:"2.15 Built-in Streaming Protocols", desc:"Standardized adaptive streaming attributes."}
-          ]
-        },
-        {
-          id: "data_forms",
-          title: "Concept 3 — Data & Forms",
-          features: [
-            {title:"3.1 Native Form Transactions", desc:"A <transaction-form> with atomic submit/rollback."},
-            {title:"3.2 Schema-Bound Inputs", desc:"Inputs bound to JSON schema types."},
-            {title:"3.3 Progressive Validation", desc:"Built-in staged validation strategies."},
-            {title:"3.4 Encrypted Field Types", desc:"Fields encrypt client-side values."},
-            {title:"3.5 Offline Syncable Forms", desc:"Forms sync offline with conflict resolution."},
-            {title:"3.6 Rich Repeaters", desc:"Native repeat blocks for input groups."},
-            {title:"3.7 Data Bind Attributes", desc:"Two-way binding attributes declaratively."},
-            {title:"3.8 Declarative Data Export", desc:"One-click export of contained data."},
-            {title:"3.9 Live Data Feeds", desc:"Form-bound live updates via streams."},
-            {title:"3.10 Secure Session Inputs", desc:"Inputs that bind to user sessions securely."},
-            {title:"3.11 Multi-source Inputs", desc:"Inputs aggregate data from multiple APIs."},
-            {title:"3.12 AI-Assist Inputs", desc:"Hints for UA-provided AI auto-fill."},
-            {title:"3.13 Declarative Calculations", desc:"Automatic computed fields in forms."},
-            {title:"3.14 Consent Bound Fields", desc:"Inputs tied to explicit consent toggles."},
-            {title:"3.15 Blockchain Form Signing", desc:"Forms with built-in cryptographic signing."}
-          ]
-        },
-        {
-          id: "interactivity_apis",
-          title: "Concept 4 — Interactivity & APIs",
-          features: [
-            {title:"4.1 Declarative Event Pipelines", desc:"Elements specify event chains declaratively."},
-            {title:"4.2 Native Signals", desc:"Lightweight signals for communication."},
-            {title:"4.3 Permission-aware APIs", desc:"APIs surface permissions consistently."},
-            {title:"4.4 Declarative Workers", desc:"Background workers declared in HTML."},
-            {title:"4.5 Built-in Animation Primitives", desc:"Declarative animation definitions."},
-            {title:"4.6 Composable Components", desc:"Native component declaration format."},
-            {title:"4.7 Offline Behavior Declarations", desc:"Elements declare offline policies."},
-            {title:"4.8 Native Permission Policies", desc:"Element-level permission controls."},
-            {title:"4.9 Event Rate Limiters", desc:"Built-in throttling for events."},
-            {title:"4.10 Native Undo/Redo History", desc:"Elements integrate with browser undo stack."},
-            {title:"4.11 Declarative Drag Regions", desc:"Built-in drag/drop areas."},
-            {title:"4.12 Multi-device Sync", desc:"Elements declare synchronization across devices."},
-            {title:"4.13 Cross-document Channels", desc:"Elements open channels between tabs securely."},
-            {title:"4.14 State Machine Elements", desc:"Declarative state machines inside tags."},
-            {title:"4.15 API-less Input Triggers", desc:"Elements declare triggers without JS glue."}
-          ]
-        },
-        {
-          id: "access_i18n",
-          title: "Concept 5 — Accessibility & Internationalization",
-          features: [
-            {title:"5.1 Native Captioning Controls", desc:"Universal captions for any media."},
-            {title:"5.2 Adaptive Language Regions", desc:"Elements declare language fallbacks."},
-            {title:"5.3 Contextual Pronunciation Hints", desc:"Attributes for phonetic guidance."},
-            {title:"5.4 Gesture Alternatives", desc:"Declarative non-gesture alternatives."},
-            {title:"5.5 Semantic Focus Management", desc:"Elements expose focus policies."},
-            {title:"5.6 Live Region Enhancements", desc:"Improved live region handling."},
-            {title:"5.7 Inclusive Input Types", desc:"Inputs for complex writing systems."},
-            {title:"5.8 Readability Metadata", desc:"Declare reading level metadata."},
-            {title:"5.9 Accessible 3D Navigation", desc:"Tags define accessible spatial navigation."},
-            {title:"5.10 Multi-sensory Elements", desc:"Attributes map visuals to haptics or audio."},
-            {title:"5.11 Cultural Date/Time Tags", desc:"Elements represent culture-specific calendars."},
-            {title:"5.12 Native Translation Hints", desc:"Attributes guide auto-translation engines."},
-            {title:"5.13 Declarative Accessibility Tests", desc:"Tags to validate accessibility requirements."},
-            {title:"5.14 Inclusive Color Metadata", desc:"Hints for color-blind safe palettes."},
-            {title:"5.15 Symbol Pronunciation Tags", desc:"Symbols mapped to proper speech outputs."}
-          ]
-        },
-        {
-          id: "security_perf",
-          title: "Concept 6 — Security & Performance",
-          features: [
-            {title:"6.1 Resource Budgeting", desc:"Elements tag their resource budget."},
-            {title:"6.2 Immutable Subtrees", desc:"Declare DOM subtrees as immutable."},
-            {title:"6.3 Fine-grained CSP Elements", desc:"Scoped content-security policies."},
-            {title:"6.4 Data Provenance Metadata", desc:"Attributes assert data origin."},
-            {title:"6.5 Native Lazy Execution", desc:"Lazy compute blocks declaratively."},
-            {title:"6.6 Sandboxed Interactive Blocks", desc:"Isolated mini-app containers."},
-            {title:"6.7 Performance Hints API", desc:"Precise performance hints."},
-            {title:"6.8 Secure Credential Inputs", desc:"Credential fields with authenticators."},
-            {title:"6.9 Deterministic Rendering Modes", desc:"Guaranteed identical layout modes."},
-            {title:"6.10 Anti-fingerprinting Flags", desc:"Elements reduce browser fingerprinting."},
-            {title:"6.11 Secure Data Capsules", desc:"Encapsulated encrypted data blocks."},
-            {title:"6.12 Zero-trust Embeds", desc:"Embed content in zero-trust sandbox."},
-            {title:"6.13 Declarative Rate Controls", desc:"Elements specify request limits."},
-            {title:"6.14 Hardware Isolation Tags", desc:"Declare hardware separation for security."},
-            {title:"6.15 Built-in Integrity Hashing", desc:"Elements verify integrity with hashes."}
-          ]
-        }
-      ]
-
-      var totalFeatures = 0
-      concepts.forEach(function(c){ totalFeatures += c.features.length })
-
-      var conceptFilter = document.getElementById('conceptFilter')
-      concepts.forEach(function(c){
-        var opt = document.createElement('option')
-        opt.value = c.id
-        opt.textContent = c.title
-        conceptFilter.appendChild(opt)
-      })
-
-      var container = document.getElementById('conceptsContainer')
-      var tpl = document.getElementById('featureTemplate')
-
-      function render(){
-        container.innerHTML = ''
-        concepts.forEach(function(c){
-          var section = document.createElement('section')
-          section.id = c.id
-          var h2 = document.createElement('h2')
-          h2.textContent = c.title
-          section.appendChild(h2)
-          var list = document.createElement('div')
-          list.setAttribute('role','list')
-          c.features.forEach(function(f){
-            var clone = tpl.content.cloneNode(true)
-            var details = clone.querySelector('details')
-            var summary = clone.querySelector('summary')
-            var desc = clone.querySelector('.desc')
-            summary.textContent = f.title
-            desc.textContent = f.desc
-            clone.querySelector('.copyBtn').addEventListener('click', function(){
-              navigator.clipboard && navigator.clipboard.writeText(f.title + " — " + f.desc)
-              alert("Copied: " + f.title)
-            })
-            list.appendChild(clone)
-          })
-          section.appendChild(list)
-          container.appendChild(section)
-        })
-        var footer = document.createElement('p')
-        footer.textContent = 'Total concepts: ' + concepts.length + ' — Total features: ' + totalFeatures + '.'
-        container.appendChild(footer)
-      }
-
-      render()
-
-      function getVisibleFeatureElements(){
-        var selected = conceptFilter.value
-        var query = document.getElementById('search').value.trim().toLowerCase()
-        var results = []
-        concepts.forEach(function(c){
-          if(selected !== 'all' && selected !== c.id) return
-          c.features.forEach(function(f){
-            var text = (f.title + ' ' + f.desc).toLowerCase()
-            if(!query || text.indexOf(query) !== -1){
-              results.push({concept: c.title, feature: f})
-            }
-          })
-        })
-        return results
-      }
-
-      document.getElementById('search').addEventListener('input', function(){
-        var q = this.value.trim().toLowerCase()
-        var selected = conceptFilter.value
-        concepts.forEach(function(c){
-          var section = document.getElementById(c.id)
-          var detailsList = section.querySelectorAll('details')
-          c.features.forEach(function(f, idx){
-            var details = detailsList[idx]
-            var text = (f.title + ' ' + f.desc).toLowerCase()
-            var matches = (!q || text.indexOf(q) !== -1)
-            var conceptMatches = (selected === 'all' || selected === c.id)
-            details.style.display = (matches && conceptMatches) ? '' : 'none'
-          })
-          section.style.display = (selected === 'all' || selected === c.id) ? '' : 'none'
-        })
-      })
-
-      document.getElementById('clearSearch').addEventListener('click', function(){
-        document.getElementById('search').value = ''
-        document.getElementById('search').dispatchEvent(new Event('input'))
-      })
-
-      conceptFilter.addEventListener('change', function(){
-        document.getElementById('search').dispatchEvent(new Event('input'))
-      })
-
-      var collapsed = false
-      document.getElementById('toggleAll').addEventListener('click', function(){
-        collapsed = !collapsed
-        var details = document.querySelectorAll('details')
-        details.forEach(function(d){ d.open = !collapsed })
-        this.textContent = collapsed ? 'Expand all' : 'Collapse all'
-      })
-
-      document.getElementById('random').addEventListener('click', function(){
-        var visible = getVisibleFeatureElements()
-        if(visible.length === 0){ alert('No visible features'); return }
-        var pick = visible[Math.floor(Math.random() * visible.length)]
-        alert('Random pick:\n' + pick.concept + '\n' + pick.feature.title + '\n\n' + pick.feature.desc)
-      })
-
-      document.getElementById('copyAll').addEventListener('click', function(){
-        var visible = getVisibleFeatureElements()
-        if(visible.length === 0){ alert('No visible features to copy'); return }
-        var text = visible.map(function(v){ return v.concept + ' — ' + v.feature.title + ': ' + v.feature.desc }).join('\n\n')
-        navigator.clipboard && navigator.clipboard.writeText(text)
-        alert('Copied ' + visible.length + ' feature(s) to clipboard.')
-      })
-
-      document.getElementById('download').addEventListener('click', function(){
-        var visible = getVisibleFeatureElements()
-        if(visible.length === 0){ alert('No visible features to download'); return }
-        var text = visible.map(function(v){ return v.concept + ' — ' + v.feature.title + ': ' + v.feature.desc }).join('\n\n')
-        var blob = new Blob([text], {type:'text/plain'})
-        var url = URL.createObjectURL(blob)
-        var a = document.createElement('a')
-        a.href = url
-        a.download = 'html6-features.txt'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      })
-
-      document.addEventListener('keydown', function(e){
-        if((e.ctrlKey || e.metaKey) && e.key === 'f'){
-          e.preventDefault()
-          document.getElementById('search').focus()
-        }
-      })
-
-      document.getElementById('search').dispatchEvent(new Event('input'))
-    })();
-  </script>
+ let capturer=new CCapture({format:'gif',framerate:fps})
+ let i=0
+ function draw(){
+  if(i<frames.length){
+   let f=frames[i];render(f[0],f[1],f[2],f[3],f[4],f[5])
+   capturer.capture(canvas)
+   i++;setTimeout(draw,1000/fps)
+  }else{
+   capturer.stop()
+   capturer.save(blob=>{
+    let url=URL.createObjectURL(blob)
+    let d=document.getElementById("download")
+    d.href=url
+    d.download="ascii_intro.gif"
+   })
+  }
+ }
+ capturer.start();draw()
+}
+</script>
 </body>
 </html>
