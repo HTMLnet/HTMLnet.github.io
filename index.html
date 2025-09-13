@@ -5,7 +5,10 @@
 <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
 </head>
 <body>
-<textarea id="input" rows="6" cols="50" placeholder="Put ASCII or text intro here"></textarea><br>
+
+<textarea id="input" rows="6" cols="50" placeholder="Put ASCII or text intro here"></textarea>
+<br>
+
 <label>Fade In:</label>
 <select id="fadeIn">
 <option value="typewriter">Typewriter</option>
@@ -15,6 +18,7 @@
 <option value="slidein">Slide In</option>
 <option value="scalein">Scale In</option>
 </select>
+
 <label>Fade Out:</label>
 <select id="fadeOut">
 <option value="none">None</option>
@@ -24,22 +28,42 @@
 <option value="scaleout">Scale Out</option>
 <option value="flashout">Flash Out</option>
 <option value="glitchout">Glitch Out</option>
-</select><br>
+</select>
+<br>
+
 <label>Mode:</label>
 <select id="mode">
 <option value="dark">Dark</option>
 <option value="light">Light</option>
 </select>
 <br>
-<label>Delay before Out (ms):</label>
-<input type="number" id="delayValue" value="1000">
+
+<label>Delay before Out:</label>
+<input type="number" id="delayValue" value="2">
+<select id="delayUnit">
+<option value="s">Seconds</option>
+<option value="ms">Milliseconds</option>
+</select>
 <br>
 <button onclick="runAnim()">Generate GIF</button>
-<canvas id="canvas" width="600" height="200" style="display:none;"></canvas>
+<br>
+<div id="previewContainer">
+<h3>Animation Preview:</h3>
+<canvas id="previewCanvas" width="600" height="200"></canvas>
+</div>
+<div id="outputContainer">
+<h3>Generated GIF:</h3>
 <div id="result"></div>
+</div>
+
+<canvas id="canvas" width="600" height="200" style="display:none;"></canvas>
+
 <script>
-let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input");
-function render(text,scale=1,x=10,alpha=1,mode="dark"){
+let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d");
+let previewCanvas=document.getElementById("previewCanvas"),pctx=previewCanvas.getContext("2d");
+let input=document.getElementById("input");
+
+function render(ctx,text,scale=1,x=10,alpha=1,mode="dark"){
 ctx.globalAlpha=1;
 ctx.fillStyle=(mode=="dark")?"white":"black";
 ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -49,6 +73,7 @@ ctx.font=`${16*scale}px monospace`;
 ctx.fillText(text,x,100);
 ctx.globalAlpha=1;
 }
+
 function buildFrames(mode,text){
 let frames=[];
 if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i).join(""),1,10,1]);}
@@ -65,38 +90,50 @@ if(mode=="flashout"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",
 if(mode=="glitchout"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1]);}frames.push(["",1,10,1]);}
 return frames;
 }
+
 function runAnim(){
 let text=input.value.split("");
 let fadeIn=document.getElementById("fadeIn").value;
 let fadeOut=document.getElementById("fadeOut").value;
 let mode=document.getElementById("mode").value;
-let delayValue=parseInt(document.getElementById("delayValue").value);
+let delayValue=parseFloat(document.getElementById("delayValue").value);
+let delayUnit=document.getElementById("delayUnit").value;
+let delayMs=(delayUnit=="s")?delayValue*1000:delayValue;
+
 let frames=[];
 frames=frames.concat(buildFrames(fadeIn,text));
-let pauseFrames=Math.max(1,Math.floor(delayValue/50));
+let pauseFrames=Math.max(1,Math.floor(delayMs/50));
 for(let i=0;i<pauseFrames;i++)frames.push([text.join(""),1,10,1]);
 if(fadeOut!="none")frames=frames.concat(buildFrames(fadeOut,text));
+
 let gif=new GIF({workers:2,quality:10,width:canvas.width,height:canvas.height});
 frames.forEach(f=>{
-render(f[0],f[1],f[2],f[3],mode);
+render(ctx,f[0],f[1],f[2],f[3],mode);
 gif.addFrame(canvas,{copy:true,delay:50});
 });
+
+let i=0;
+function previewAnim(){
+if(i<frames.length){
+render(pctx,frames[i][0],frames[i][1],frames[i][2],frames[i][3],mode);
+i++;
+setTimeout(previewAnim,50);
+} else i=0; setTimeout(previewAnim,50);
+}
+previewAnim();
+
 gif.on('finished',function(blob){
 let url=URL.createObjectURL(blob);
 let resultDiv=document.getElementById("result");
 resultDiv.innerHTML="";
-let a=document.createElement('a');
-a.href=url;
-a.download="ascii_intro.gif";
-let img=document.createElement('img');
-img.src=url;
-img.alt="ASCII GIF Preview";
-a.appendChild(img);
-resultDiv.appendChild(a);
-a.click();
+let video=document.createElement('video');
+video.src=url;
+video.controls=true;
+video.autoplay=true;
+video.loop=true;
+resultDiv.appendChild(video);
 });
 gif.render();
-alert("Generating GIF... preview will appear below, click it to download!");
 }
 </script>
 </body>
