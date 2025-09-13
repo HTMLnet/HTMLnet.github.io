@@ -93,14 +93,14 @@ function runAnim(){
   }else{
    capturer.stop()
    capturer.save(blob=>{
-     let url=URL.createObjectURL(blob)
-     let a=document.createElement('a')
-     a.href=url
-     a.download="ascii_intro.gif"
-     document.body.appendChild(a)
-     a.click()
-     document.body.removeChild(a)
-     URL.revokeObjectURL(url)
+    let url=URL.createObjectURL(blob)
+    let a=document.createElement('a')
+    a.href=url
+    a.download="ascii_intro.gif"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
    })
   }
  }
