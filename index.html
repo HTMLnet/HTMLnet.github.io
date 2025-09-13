@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>ASCII Intro GIF Maker</title>
-<script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
 </head>
 <body>
 <textarea id="input" rows="6" cols="50" placeholder="Put ASCII or text intro here"></textarea>
@@ -38,22 +38,22 @@
 <option value="ms">Milliseconds</option>
 </select>
 <br>
-<button onclick="runAnim()">Generate</button>
+<button onclick="runAnim()">Generate & Download GIF</button>
 
 <script>
-let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input")
+let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input");
 
 function render(text,scale=1,x=10,alpha=1){
- ctx.globalAlpha=1
- ctx.fillStyle="white";ctx.fillRect(0,0,canvas.width,canvas.height)
- ctx.globalAlpha=alpha
- ctx.fillStyle="black";ctx.font=`${16*scale}px monospace`
- ctx.fillText(text, x, 100)
- ctx.globalAlpha=1
+ ctx.globalAlpha=1;
+ ctx.fillStyle="white"; ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.globalAlpha=alpha;
+ ctx.fillStyle="black"; ctx.font=`${16*scale}px monospace`;
+ ctx.fillText(text, x, 100);
+ ctx.globalAlpha=1;
 }
 
 function buildFrames(mode,text){
- let frames=[]
+ let frames=[];
  if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i),1,10,1])}
  if(mode=="wave"){for(let i=0;i<text.length*2;i++){frames.push([text.map((c,idx)=>idx==i%text.length?c.toUpperCase():c).join(""),1,10,1])}}
  if(mode=="glitch"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.1?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1])}frames.push([text.join(""),1,10,1])}
@@ -66,40 +66,48 @@ function buildFrames(mode,text){
  if(mode=="scaleout"){for(let s=1;s>=0.1;s-=0.1)frames.push([text.join(""),s,10,1])}
  if(mode=="flashout"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",1,10,1])}}
  if(mode=="glitchout"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1])}frames.push(["",1,10,1])}
- return frames
+ return frames;
 }
 
 function runAnim(){
- let text=input.value.split("")
- let fadeIn=document.getElementById("fadeIn").value
- let fadeOut=document.getElementById("fadeOut").value
- let fps=parseInt(document.getElementById("fps").value)
- let delayValue=parseInt(document.getElementById("delayValue").value)
- let delayUnit=document.getElementById("delayUnit").value
- let delayFrames=(delayUnit=="s"?delayValue*fps:Math.floor(delayValue/(1000/fps)))
+ let text=input.value.split("");
+ let fadeIn=document.getElementById("fadeIn").value;
+ let fadeOut=document.getElementById("fadeOut").value;
+ let fps=parseInt(document.getElementById("fps").value);
+ let delayValue=parseInt(document.getElementById("delayValue").value);
+ let delayUnit=document.getElementById("delayUnit").value;
+ let delayFrames=(delayUnit=="s"?delayValue*fps:Math.floor(delayValue/(1000/fps)));
 
- let frames=[]
- frames=frames.concat(buildFrames(fadeIn,text))
- for(let d=0;d<delayFrames;d++)frames.push([text.join(""),1,10,1])
- if(fadeOut!="none")frames=frames.concat(buildFrames(fadeOut,text))
+ let frames=[];
+ frames=frames.concat(buildFrames(fadeIn,text));
+ for(let d=0;d<delayFrames;d++) frames.push([text.join(""),1,10,1]);
+ if(fadeOut!="none") frames=frames.concat(buildFrames(fadeOut,text));
 
- // CCapture for GIF
- let capturer=new CCapture({format:'gif',framerate:fps,verbose:true})
- let i=0
- capturer.start()
+ // GIF.js setup
+ let gif = new GIF({
+     workers:2,
+     quality:10,
+     width:canvas.width,
+     height:canvas.height
+ });
 
- function draw(){
-  if(i<frames.length){
-   let f=frames[i];render(f[0],f[1],f[2],f[3])
-   capturer.capture(canvas)
-   i++;setTimeout(draw,1000/fps)
-  }else{
-   capturer.stop()
-   capturer.save() // This will automatically download the GIF
-   alert("Download should start automatically!")
-  }
- }
- draw()
+ // Add frames to GIF
+ frames.forEach(f=>{
+     render(f[0],f[1],f[2],f[3]);
+     gif.addFrame(canvas,{copy:true,delay:1000/fps});
+ });
+
+ gif.on('finished', function(blob){
+     let url = URL.createObjectURL(blob);
+     let a = document.createElement('a');
+     a.href = url;
+     a.download = 'ascii_intro.gif';
+     a.click();
+     URL.revokeObjectURL(url);
+ });
+
+ gif.render();
+ alert("Generating GIF... it will download automatically when done!");
 }
 </script>
 </body>
