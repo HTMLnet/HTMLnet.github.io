@@ -3,68 +3,63 @@
 <head>
 <title>ASCII Intro GIF Maker</title>
 <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-<style>
-  body { font-family: monospace; background:#222; color:#eee; text-align:center; }
-  textarea { width: 80%; margin:10px 0; }
-  canvas { border:1px solid #888; margin-bottom:10px; }
-  .tools { margin-bottom:20px; }
-  .light { background:white; color:black; }
-  .dark { background:black; color:white; }
-</style>
 </head>
-<body class="dark">
+<body>
 
-<div class="tools">
-  <textarea id="input" rows="6" placeholder="Put ASCII or text intro here"></textarea><br>
-  <label>Fade In:</label>
-  <select id="fadeIn">
-    <option value="typewriter">Typewriter</option>
-    <option value="wave">Wave</option>
-    <option value="glitch">Glitch</option>
-    <option value="flash">Flash</option>
-    <option value="slidein">Slide In</option>
-    <option value="scalein">Scale In</option>
-  </select>
-  <label>Fade Out:</label>
-  <select id="fadeOut">
-    <option value="none">None</option>
-    <option value="reverse">Reverse</option>
-    <option value="fadeout">Fade Out</option>
-    <option value="slideout">Slide Out</option>
-    <option value="scaleout">Scale Out</option>
-    <option value="flashout">Flash Out</option>
-    <option value="glitchout">Glitch Out</option>
-  </select>
-  <br>
-  <label>Mode:</label>
-  <select id="mode">
-    <option value="dark">Dark</option>
-    <option value="light">Light</option>
-  </select>
-  <br><br>
-  <button onclick="runAnim()">Generate & Download GIF</button>
-</div>
+<textarea id="input" rows="6" cols="50" placeholder="Put ASCII or text intro here"></textarea>
+<br>
+<label>Fade In:</label>
+<select id="fadeIn">
+<option value="typewriter">Typewriter</option>
+<option value="wave">Wave</option>
+<option value="glitch">Glitch</option>
+<option value="flash">Flash</option>
+<option value="slidein">Slide In</option>
+<option value="scalein">Scale In</option>
+</select>
 
-<canvas id="canvas" width="600" height="200"></canvas>
+<label>Fade Out:</label>
+<select id="fadeOut">
+<option value="none">None</option>
+<option value="reverse">Reverse</option>
+<option value="fadeout">Fade Out</option>
+<option value="slideout">Slide Out</option>
+<option value="scaleout">Scale Out</option>
+<option value="flashout">Flash Out</option>
+<option value="glitchout">Glitch Out</option>
+</select>
+<br>
+
+<label>Mode:</label>
+<select id="mode">
+<option value="dark">Dark</option>
+<option value="light">Light</option>
+</select>
+<br>
+<button onclick="runAnim()">Generate GIF</button>
+
+<canvas id="canvas" width="600" height="200" style="display:none;"></canvas>
 <div id="result"></div>
 
 <script>
-let canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),input=document.getElementById("input");
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let input = document.getElementById("input");
 
-function render(text,scale=1,x=10,alpha=1,mode="dark"){
-    ctx.globalAlpha=1;
-    ctx.fillStyle = (mode=="dark") ? "white":"black";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+function render(text, scale, x, alpha, mode) {
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = (mode === "dark") ? "white" : "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = (mode=="dark") ? "black":"white";
-    ctx.font=`${16*scale}px monospace`;
-    ctx.fillText(text,x,100);
-    ctx.globalAlpha=1;
+    ctx.fillStyle = (mode === "dark") ? "black" : "white";
+    ctx.font = (16 * scale) + "px monospace";
+    ctx.fillText(text, x, 100);
+    ctx.globalAlpha = 1;
 }
 
-function buildFrames(mode,text){
-    let frames=[];
-    if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i),1,10,1]);}
+function buildFrames(mode, text) {
+    let frames = [];
+    if(mode=="typewriter"){for(let i=1;i<=text.length;i++)frames.push([text.slice(0,i).join(""),1,10,1]);}
     if(mode=="wave"){for(let i=0;i<text.length*2;i++){frames.push([text.map((c,idx)=>idx==i%text.length?c.toUpperCase():c).join(""),1,10,1]);}}
     if(mode=="glitch"){for(let i=0;i<20;i++){frames.push([text.map(c=>Math.random()<0.1?String.fromCharCode(33+Math.random()*94):c).join(""),1,10,1]);}frames.push([text.join(""),1,10,1]);}
     if(mode=="flash"){for(let i=0;i<20;i++){frames.push([i%2==0?text.join(""):"",1,10,1]);}}
@@ -79,38 +74,44 @@ function buildFrames(mode,text){
     return frames;
 }
 
-function runAnim(){
-    let text=input.value.split("");
-    let fadeIn=document.getElementById("fadeIn").value;
-    let fadeOut=document.getElementById("fadeOut").value;
-    let mode=document.getElementById("mode").value;
+function runAnim() {
+    let text = input.value.split("");
+    let fadeIn = document.getElementById("fadeIn").value;
+    let fadeOut = document.getElementById("fadeOut").value;
+    let mode = document.getElementById("mode").value;
 
-    let frames=[];
-    frames=frames.concat(buildFrames(fadeIn,text));
-    if(fadeOut!="none") frames=frames.concat(buildFrames(fadeOut,text));
+    let frames = [];
+    frames = frames.concat(buildFrames(fadeIn,text));
+    if(fadeOut != "none") frames = frames.concat(buildFrames(fadeOut,text));
 
-    let gif = new GIF({
-        workers:2,
-        quality:10,
-        width:canvas.width,
-        height:canvas.height
-    });
+    let gif = new GIF({workers:2, quality:10, width:canvas.width, height:canvas.height});
 
     frames.forEach(f=>{
-        render(f[0],f[1],f[2],f[3],mode);
-        gif.addFrame(canvas,{copy:true,delay:50});
+        render(f[0], f[1], f[2], f[3], mode);
+        gif.addFrame(canvas, {copy:true, delay:50});
     });
 
     gif.on('finished', function(blob){
         let url = URL.createObjectURL(blob);
         let resultDiv = document.getElementById("result");
-        resultDiv.innerHTML = `<a href="${url}" download="ascii_intro.gif">
-            <img src="${url}" style="border:1px solid #888; max-width:80%; margin-top:10px;">
-        </a>`;
+        resultDiv.innerHTML = "";
+
+        // Video/GIF preview below tools, clickable to download
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = "ascii_intro.gif";
+        let img = document.createElement('img');
+        img.src = url;
+        img.alt = "ASCII GIF Preview";
+        a.appendChild(img);
+        resultDiv.appendChild(a);
+
+        // Automatic download
+        a.click();
     });
 
     gif.render();
-    alert("Generating GIF... it will appear below when ready!");
+    alert("Generating GIF... preview will appear below, click it to download!");
 }
 </script>
 </body>
